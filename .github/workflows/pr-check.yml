@@ -8,3 +8,31 @@ jobs:
     steps:
     - name: Always succeed 🟢
       run: exit 0
+
+  terraform-checks:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # pr comment
+      id-token: write # configure-aws-credentials
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.10.2
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::097614841487:role/GithubActionsRole
+        aws-region: us-east-1
+    - name: Terraform validations and plan
+      run: |
+        terraform init -input=false
+        terraform validate
+        terraform fmt -check
+        terraform plan -input=false -out=tfplan
+        terraform show -no-color tfplan > plan.txt
+    - name: Post Terraform Plan to PR
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: Terraform Plan
+        path: plan.txt
