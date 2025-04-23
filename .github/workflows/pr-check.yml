@@ -30,9 +30,8 @@ jobs:
         terraform validate
         terraform fmt -check
         terraform plan -input=false -out=tfplan
-        terraform show -no-color tfplan > plan.txt
     - name: Post Terraform Plan to PR
-      uses: marocchino/sticky-pull-request-comment@v2
+      uses: borchero/terraform-plan-comment@v2
       with:
-        header: Terraform Plan
-        path: plan.txt
+        token: ${{ github.token }}
+        planfile: tfplan
