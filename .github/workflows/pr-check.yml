@@ -1,5 +1,6 @@
 name: PR Check
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened]
   merge_group:
@@ -17,6 +18,8 @@ jobs:
       pull-requests: write # pr comment
       id-token: write # configure-aws-credentials
       contents: read
+    concurrency: main
+    environment: dev
     steps:
     - uses: actions/checkout@v4
     - uses: hashicorp/setup-terraform@v3
