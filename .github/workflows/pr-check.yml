@@ -20,6 +20,8 @@ jobs:
       contents: read
     concurrency: main
     environment: dev
+    outputs:
+      success: ${{ steps.sanity.outputs.success }}
     steps:
     - uses: actions/checkout@v4
     - uses: hashicorp/setup-terraform@v3
@@ -47,3 +49,33 @@ jobs:
     - name: Fail workflow on deploy error
       if: failure()
       run: echo "Deployment failed, have to rollback 🔴" && exit 1
+    - name: Simulate sanity check
+      id: sanity
+      run: |
+        echo "success=true" >> $GITHUB_OUTPUT
+
+  rollback-if-failed:
+    name: Rollback & re-apply main
+    needs: terraform-checks
+    if: needs.terraform-checks.outputs.success == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # configure-aws-credentials
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: main
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.10.2
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::097614841487:role/GithubActionsRole
+        aws-region: us-east-1
+    - name: Terraform validations and plan
+      run: |
+        terraform init -input=false
+        terraform validate
+        terraform fmt -check
+        terraform apply -input=false -auto-approve
