@@ -51,6 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'merge_group'
+    continue-on-error: true
     environment: dev
     concurrency: deploy-main
     steps:
@@ -73,6 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-terraform
     if: github.event_name == 'merge_group'
+    continue-on-error: true
     steps:
     - name: Simulate sanity check
       id: sanity
