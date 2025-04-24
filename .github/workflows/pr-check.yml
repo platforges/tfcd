@@ -81,7 +81,7 @@ jobs:
       id: sanity
       run: |
         echo "success=true" >> $GITHUB_OUTPUT
-        exit 0
+        exit 1
 
   rollback-if-failed:
     name: Rollback & re-apply main
