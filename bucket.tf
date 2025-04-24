@@ -7,4 +7,7 @@ resource "aws_s3_object" "version_file" {
   key    = "version"
   source = "version"
   etag   = filemd5("version")
+  tags   = { "hash" = var.hash }
 }
+
+variable "hash" { type = string }

@@ -6,8 +6,8 @@ on:
   merge_group:
     types: [ checks_requested ]
 permissions:
-  pull-requests: write # pr comment
   id-token: write # configure-aws-credentials
+  pull-requests: write # pr comment
 jobs:
   pr-checks:
     name: PR checks
@@ -16,9 +16,14 @@ jobs:
     - name: Always succeed 🟢
       run: exit 0
 
+  build:
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/build.yml
+
   terraform-checks:
     name: Terraform checks
     runs-on: ubuntu-latest
+    needs: build
     if: github.event_name == 'pull_request'
     steps:
     - uses: actions/checkout@v4
@@ -34,7 +39,7 @@ jobs:
         terraform init -input=false
         terraform validate
         terraform fmt -check
-        terraform plan -input=false -out=tfplan
+        terraform plan -input=false -out=tfplan -var 'hash=${{ needs.build.outputs.hash }}'
     - name: Post terraform plan to PR
       uses: borchero/terraform-plan-comment@v2
       with:
