@@ -11,6 +11,7 @@ permissions:
 jobs:
   pr-checks:
     name: PR checks
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
     - name: Always succeed 🟢
@@ -74,20 +75,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-terraform
     if: github.event_name == 'merge_group'
-    outputs:
-      success: ${{ steps.sanity.outputs.success }}
     steps:
     - name: Simulate sanity check
       id: sanity
-      run: |
-        echo "success=true" >> $GITHUB_OUTPUT
-        exit 0
+      run: exit 0
 
   rollback-if-failed:
     name: Rollback & re-apply main
     runs-on: ubuntu-latest
     needs: [ deploy-terraform, sanity-test ]
-    if:  needs.deploy-terraform.result == 'failure' || needs.sanity-test.result == 'failure' || needs.sanity-test.outputs.success == 'false'
+    if:  needs.deploy-terraform.result == 'failure' || needs.sanity-test.result == 'failure'
     environment: dev
     concurrency: deploy-main
     steps:
