@@ -15,6 +15,6 @@ jobs:
     - name: Print git short sha
       id: print-hash
       run: |
-        hash=$(git rev-parse --short=7 HEAD) >> $GITHUB_ENV
+        hash=$(git rev-parse --short=7 HEAD)
         echo "### Git short sha: $hash" >> $GITHUB_STEP_SUMMARY
         echo "hash=$hash" >> $GITHUB_OUTPUT

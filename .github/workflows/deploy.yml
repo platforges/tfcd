@@ -36,7 +36,7 @@ jobs:
     - name: Simulate sanity check
       id: sanity
       run: |
-        echo "success=true" >> $GITHUB_OUTPUT
+        echo "success=false" >> $GITHUB_OUTPUT
 
   rollback-if-failed:
     name: Rollback & re-apply main
