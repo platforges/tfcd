@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   pull_request:
     types: [ opened, synchronize, reopened ]
+  merge_group:
+    types: [ checks_requested ]
 permissions:
   pull-requests: write # pr comment
   id-token: write # configure-aws-credentials
@@ -17,6 +19,7 @@ jobs:
   terraform-checks:
     name: Terraform checks
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
     - uses: actions/checkout@v4
     - uses: hashicorp/setup-terraform@v3
