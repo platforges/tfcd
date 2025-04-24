@@ -69,19 +69,19 @@ jobs:
       id: apply
       run: |
         terraform init -input=false
-        terraform apply -auto-approve -input=false -var 'hash=${{ needs.build.outputs.hash }}' && return 1
+        terraform apply -auto-approve -input=false -var 'hash=${{ needs.build.outputs.hash }}'
         if [ $? -ne 0 ]; then
           echo "Terraform apply failed. 🔴"
           echo "result=failure" >> $GITHUB_OUTPUT
           exit 1
         fi
-        echo "result=success" >> $GITHUB_OUTPUT
+        echo "result=failure" >> $GITHUB_OUTPUT
+        exit 1
 
   sanity-test:
     name: Deployed sanity test
     runs-on: ubuntu-latest
     needs: deploy-terraform
-    if: github.event_name == 'merge_group'
     continue-on-error: true
     outputs:
       result: ${{ steps.sanity.outputs.result }}
@@ -90,7 +90,8 @@ jobs:
       id: sanity
       run: |
         if [ "${{ needs.deploy-terraform.outputs.result }}" == "failure" ]; then
-          echo "Deploy failed, skipping sanity test."
+          echo "Deploy failed, skipping sanity test and blocking merge 🔴"
+          echo "result=failure" >> $GITHUB_OUTPUT
           exit 1
         fi
         echo "result=success" >> $GITHUB_OUTPUT
