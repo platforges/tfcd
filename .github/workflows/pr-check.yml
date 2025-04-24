@@ -2,24 +2,24 @@ name: PR Check
 on:
   workflow_dispatch:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
   merge_group:
-    types: [checks_requested]
+    types: [ checks_requested ]
+permissions:
+  pull-requests: write # pr comment
+  id-token: write # configure-aws-credentials
 jobs:
   pr-checks:
+    name: PR checks
     runs-on: ubuntu-latest
     steps:
     - name: Always succeed 🟢
       run: exit 0
 
   terraform-checks:
+    name: Terraform checks
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write # pr comment
-      id-token: write # configure-aws-credentials
-      contents: read
-    concurrency: main
-    environment: dev
+    if: github.event_name == 'pull_request'
     steps:
     - uses: actions/checkout@v4
     - uses: hashicorp/setup-terraform@v3
@@ -36,14 +36,7 @@ jobs:
         terraform fmt -check
         terraform plan -input=false -out=tfplan
     - name: Post terraform plan to PR
-      if: github.event_name == 'pull_request'
       uses: borchero/terraform-plan-comment@v2
       with:
         token: ${{ github.token }}
         planfile: tfplan
-    - name: Terraform apply
-      if: github.event_name == 'merge_group'
-      run: terraform apply -auto-approve -input=false
-    - name: Fail workflow on deploy error
-      if: failure()
-      run: echo "Deployment failed, have to rollback 🔴" && exit 1
