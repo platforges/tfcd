@@ -66,9 +66,7 @@ jobs:
       run: |
         terraform init -input=false
         terraform apply -auto-approve -input=false -var 'hash=${{ needs.build.outputs.hash }}'
-    - name: Fail workflow on deploy error
-      if: failure()
-      run: echo "Deployment failed, have to rollback 🔴" && exit 1
+        exit 1
 
   sanity-test:
     name: Deployed sanity test
