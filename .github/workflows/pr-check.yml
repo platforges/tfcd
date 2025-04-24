@@ -2,26 +2,26 @@ name: PR Check
 on:
   workflow_dispatch:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
   merge_group:
-    types: [checks_requested]
+    types: [ checks_requested ]
+permissions:
+  pull-requests: write # pr comment
+  id-token: write # configure-aws-credentials
+  # contents: read # is this required?
 jobs:
   pr-checks:
+    name: PR checks
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
     - name: Always succeed 🟢
       run: exit 0
 
   terraform-checks:
+    name: Terraform checks
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write # pr comment
-      id-token: write # configure-aws-credentials
-      contents: read
-    concurrency: main
-    environment: dev
-    outputs:
-      success: ${{ steps.sanity.outputs.success }}
+    if: github.event_name == 'pull_request'
     steps:
     - uses: actions/checkout@v4
     - uses: hashicorp/setup-terraform@v3
@@ -38,14 +38,32 @@ jobs:
         terraform fmt -check
         terraform plan -input=false -out=tfplan
     - name: Post terraform plan to PR
-      if: github.event_name == 'pull_request'
       uses: borchero/terraform-plan-comment@v2
       with:
         token: ${{ github.token }}
         planfile: tfplan
+
+  deploy-terraform:
+    name: Deploy terraform
+    runs-on: ubuntu-latest
+    if: github.event_name == 'merge_group'
+    concurrency: main
+    environment: dev
+    outputs:
+      success: ${{ steps.sanity.outputs.success }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.10.2
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::097614841487:role/GithubActionsRole
+        aws-region: us-east-1
     - name: Terraform apply
-      if: github.event_name == 'merge_group'
-      run: terraform apply -auto-approve -input=false
+      run: |
+        terraform init -input=false
+        terraform apply -auto-approve -input=false
     - name: Fail workflow on deploy error
       if: failure()
       run: echo "Deployment failed, have to rollback 🔴" && exit 1
@@ -56,12 +74,11 @@ jobs:
 
   rollback-if-failed:
     name: Rollback & re-apply main
-    needs: terraform-checks
-    if: needs.terraform-checks.outputs.success == 'false'
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write # configure-aws-credentials
-      contents: read
+    needs: deploy-terraform
+    if: needs.deploy-terraform.outputs.success == 'false'
+    concurrency: main
+    environment: dev
     steps:
     - uses: actions/checkout@v4
       with:
@@ -73,9 +90,7 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::097614841487:role/GithubActionsRole
         aws-region: us-east-1
-    - name: Terraform validations and plan
+    - name: Terraform apply
       run: |
         terraform init -input=false
-        terraform validate
-        terraform fmt -check
         terraform apply -input=false -auto-approve
