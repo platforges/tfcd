@@ -1,0 +1,20 @@
+name: Build
+on:
+  workflow_call: # reusable workflow
+    outputs:
+      hash:
+        description: Git short sha of current HEAD commit
+        value: ${{ jobs.git.outputs.githash }}
+jobs:
+  git:
+    runs-on: ubuntu-latest
+    outputs:
+      githash: ${{ steps.print-hash.outputs.hash }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Print git short sha
+      id: print-hash
+      run: |
+        hash=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
+        echo "### Git short sha: $hash" >> $GITHUB_STEP_SUMMARY
+        echo "hash=$hash" >> $GITHUB_OUTPUT
