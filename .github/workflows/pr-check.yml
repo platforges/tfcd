@@ -67,7 +67,6 @@ jobs:
       run: |
         terraform init -input=false
         terraform apply -auto-approve -input=false -var 'hash=${{ needs.build.outputs.hash }}'
-        exit 1
 
   sanity-test:
     name: Deployed sanity test
@@ -78,7 +77,12 @@ jobs:
     steps:
     - name: Simulate sanity check
       id: sanity
-      run: exit 0
+      run: |
+        if [ "${{ needs.deploy-terraform.result }}" == "failure" ]; then
+          echo "Deploy failed, skipping sanity test."
+          exit 1
+        fi
+        exit 0
 
   rollback-if-failed:
     name: Rollback & re-apply main
