@@ -18,16 +18,12 @@ jobs:
     - uses: dorny/paths-filter@v3
       id: filter
       with:
-        filters: |
-          tf:
-          - '*.(tf|tfvars)'
-          - '.terraform.locl.hcl'
-          - version
+        filters: "tf: [ '*.(tf|tfvars)', '.terraform.locl.hcl', version ]"
 
   pr-checks:
     uses: ./.github/workflows/pass.yml
     with:
-      shoudRun: false
+      shoudRun: true
 
   build:
     name: Build
