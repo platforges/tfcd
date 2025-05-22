@@ -9,6 +9,21 @@ permissions:
   id-token: write # configure-aws-credentials
   pull-requests: write # pr comment
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    outputs:
+      tf: ${{ steps.filter.outputs.tf }}
+    steps:
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          tf:
+          - '*.(tf|tfvars)'
+          - '.terraform.locl.hcl'
+          - version
+
   pr-checks: # "PR checks"
     uses: ./.github/workflows/pass.yml
     with:
@@ -21,8 +36,8 @@ jobs:
   terraform-checks:
     name: Terraform checks
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'pull_request'
+    needs: [ changes, build ]
+    if: ${{ needs.changes.outputs.tf }}
     steps:
     - uses: actions/checkout@v4
     - uses: hashicorp/setup-terraform@v3
