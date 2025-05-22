@@ -9,11 +9,10 @@ permissions:
   id-token: write # configure-aws-credentials
   pull-requests: write # pr comment
 jobs:
-  pr-checks:
-    name: PR checks
+  pr-checks: # "PR checks"
     uses: ./.github/workflows/pass.yml
     with:
-      shoudRun: false
+      shoudRun: true
 
   build:
     name: Build
