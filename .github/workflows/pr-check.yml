@@ -27,7 +27,7 @@ jobs:
   pr-checks:
     uses: ./.github/workflows/pass.yml
     with:
-      shoudRun: true
+      shoudRun: false
 
   build:
     name: Build
@@ -37,7 +37,7 @@ jobs:
     name: Terraform checks
     runs-on: ubuntu-latest
     needs: [ changes, build ]
-    if: ${{ needs.changes.outputs.tf }}
+    if: ${{ needs.changes.outputs.tf == 'true' }}
     steps:
     - uses: actions/checkout@v4
     - uses: hashicorp/setup-terraform@v3
