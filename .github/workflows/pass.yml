@@ -11,7 +11,6 @@ on:
         default: ubuntu-latest
 jobs:
   pass:
-    name: PR checks
     if: ${{ inputs.shoudRun }}
     runs-on: ${{ inputs.runs-on }}
     steps:

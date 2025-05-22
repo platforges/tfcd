@@ -24,7 +24,7 @@ jobs:
           - '.terraform.locl.hcl'
           - version
 
-  pr-checks: # "PR checks"
+  pr-checks:
     uses: ./.github/workflows/pass.yml
     with:
       shoudRun: true
