@@ -1,0 +1,18 @@
+on:
+  workflow_call:
+    inputs:
+      shoudRun:
+        description: Whether to skip the job
+        type: boolean
+        default: true
+      runs-on:
+        description: Type of machine to run the job on
+        type: string
+        default: ubuntu-latest
+jobs:
+  pass:
+    if: ${{ inputs.shoudRun }}
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+    - name: Always succeed 🟢
+      run: exit 0

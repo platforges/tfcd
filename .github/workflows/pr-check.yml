@@ -11,11 +11,9 @@ permissions:
 jobs:
   pr-checks:
     name: PR checks
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Always succeed 🟢
-      run: exit 0
+    uses: ./.github/workflows/pass.yml
+    with:
+      shoudRun: false
 
   build:
     name: Build
