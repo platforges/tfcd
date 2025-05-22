@@ -1,8 +1,8 @@
 # tfcd
 
 ```sh
-# Write git short sha into version file
-git rev-parse --short=7 HEAD > version
+# Print git version (build.yml)
+git rev-parse --short=7 HEAD
 # Use personal aws_access_key_id + aws_secret_access_key
 awsp personal
 # Print S3 version file content
