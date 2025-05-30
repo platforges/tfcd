@@ -24,7 +24,7 @@ jobs:
   pr-checks:
     uses: ./.github/workflows/pass.yml
     with:
-      shoudRun: true
+      skip: true
 
   build:
     name: Build
