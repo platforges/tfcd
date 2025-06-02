@@ -10,3 +10,6 @@ aws s3 cp s3://tfcd-app/version -
 # Print file tags
 aws s3api get-object-tagging --bucket tfcd-app --key version
 ```
+### Required status checks
+- pr-checks / pass
+- Deployed sanity test (_disabled_)

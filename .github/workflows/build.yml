@@ -17,3 +17,6 @@ jobs:
         hash=$(git rev-parse --short=7 HEAD)
         echo "### Git short sha: $hash" >> $GITHUB_STEP_SUMMARY
         echo "hash=$hash" >> $GITHUB_OUTPUT
+        echo "Waiting for 2 minutes"
+        sleep 120
+        echo "Done waiting 🟢"
