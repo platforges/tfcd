@@ -23,8 +23,6 @@ jobs:
 
   pr-checks:
     uses: ./.github/workflows/pass.yml
-    with:
-      skip: true
 
   build:
     name: Build
