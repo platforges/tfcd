@@ -58,7 +58,7 @@ jobs:
     name: Deploy terraform
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'merge_group'
+    if: github.event_name == 'merge_group' && needs.build.result == 'success'
     continue-on-error: true
     environment: dev
     concurrency: deploy-main
