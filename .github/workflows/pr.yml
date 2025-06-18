@@ -15,6 +15,18 @@ jobs:
       tf: ${{ steps.filter.outputs.tf }}
     steps:
     - uses: actions/checkout@v4
+    - uses: yokawasa/action-setup-kube-tools@v0.11.2
+    - run: |
+        kubectl version --client
+        kustomize version
+        helm version
+        kubeconform -v
+        conftest --version
+        yq --version
+        rancher --version
+        tilt version
+        skaffold version
+        kube-score version
     - uses: dorny/paths-filter@v3
       id: filter
       with:
