@@ -15,12 +15,13 @@ jobs:
       tf: ${{ steps.filter.outputs.tf }}
     steps:
     - uses: actions/checkout@v4
-    - uses: yokawasa/action-setup-kube-tools@v0.11.2
+    - name: Test post
+      uses: gacts/run-and-post-run@v1
       with:
-        kubectl: '1.33.2'
-    - run: |
-        kubectl version --client
-        helm version
+        run: |
+          echo "BANANA=split" >> $GITHUB_ENV
+        post: |
+          echo "Banana: $BANANA"
     - uses: dorny/paths-filter@v3
       id: filter
       with:
