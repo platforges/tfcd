@@ -2,19 +2,24 @@ name: Deploy Terraform
 on:
   workflow_call:
     inputs:
-      ref:
-        description: The git ref to checkout
-        type: string
-        default: ''
       environment:
-        required: true
         type: string
+        required: true
+      aws_account_id:
+        type: string
+        required: true
       hash:
         required: true
         type: string
+      ref:
+        type: string
+        default: ''
       runs-on:
         type: string
         default: ubuntu-latest
+      skip:
+        type: boolean
+        default: false
     outputs:
       result:
         description: Whether terraform apply step was successfull or not
@@ -30,24 +35,11 @@ jobs:
     outputs:
       result: ${{ steps.apply.outputs.result }}
     steps:
-    - uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.ref }}
-    - uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.10.2
-    - uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::097614841487:role/GithubActionsRole
-        aws-region: us-east-1
-    - name: Terraform apply
-      id: apply
+    - id: apply
       run: |
-        terraform init -input=false
-        terraform apply -auto-approve -input=false -var 'hash=${{ inputs.hash }}'
-        if [ $? -ne 0 ]; then
-          echo "Terraform apply failed. 🔴"
-          echo "result=failure" >> $GITHUB_OUTPUT
-          exit 1
-        fi
+        echo "Running .github/workflows/deploy.yml 🚀"
+        echo "environment: ${{ inputs.environment }}"
+        echo "aws_account_id: ${{ inputs.aws_account_id }}"
+        echo "ref: ${{ inputs.ref }}"
+        echo "hash: ${{ inputs.hash }}"
         echo "result=success" >> $GITHUB_OUTPUT
