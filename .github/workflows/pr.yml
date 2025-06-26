@@ -70,7 +70,7 @@ jobs:
   rollback:
     needs: [changes, required-check]
     if: always() && needs.required-check.result == 'failure'
-    uses: ./.github/workflows/rollback.yml
+    uses: ./.github/workflows/deploy.yml
     strategy:
       matrix:
         env:
