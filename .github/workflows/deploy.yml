@@ -2,19 +2,24 @@ name: Deploy Terraform
 on:
   workflow_call:
     inputs:
-      ref:
-        description: The git ref to checkout
-        type: string
-        default: ''
       environment:
-        required: true
         type: string
+        required: true
+      aws_account_id:
+        type: string
+        required: true
       hash:
         required: true
         type: string
+      ref:
+        type: string
+        default: ''
       runs-on:
         type: string
         default: ubuntu-latest
+      skip:
+        type: boolean
+        default: false
     outputs:
       result:
         description: Whether terraform apply step was successfull or not
@@ -32,7 +37,9 @@ jobs:
     steps:
     - id: apply
       run: |
+        echo "Running .github/workflows/deploy.yml 🚀"
         echo "environment: ${{ inputs.environment }}"
+        echo "aws_account_id: ${{ inputs.aws_account_id }}"
         echo "ref: ${{ inputs.ref }}"
         echo "hash: ${{ inputs.hash }}"
         echo "result=success" >> $GITHUB_OUTPUT
