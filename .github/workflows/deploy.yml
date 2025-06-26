@@ -30,24 +30,9 @@ jobs:
     outputs:
       result: ${{ steps.apply.outputs.result }}
     steps:
-    - uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.ref }}
-    - uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.10.2
-    - uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::097614841487:role/GithubActionsRole
-        aws-region: us-east-1
-    - name: Terraform apply
-      id: apply
+    - id: apply
       run: |
-        terraform init -input=false
-        terraform apply -auto-approve -input=false -var 'hash=${{ inputs.hash }}'
-        if [ $? -ne 0 ]; then
-          echo "Terraform apply failed. 🔴"
-          echo "result=failure" >> $GITHUB_OUTPUT
-          exit 1
-        fi
+        echo "environment: ${{ inputs.environment }}"
+        echo "ref: ${{ inputs.ref }}"
+        echo "hash: ${{ inputs.hash }}"
         echo "result=success" >> $GITHUB_OUTPUT
