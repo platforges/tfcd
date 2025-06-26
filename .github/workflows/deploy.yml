@@ -20,6 +20,9 @@ on:
       skip:
         type: boolean
         default: false
+      fail:
+        type: boolean
+        default: false
 permissions:
   id-token: write # configure-aws-credentials
 jobs:
@@ -36,7 +39,6 @@ jobs:
         echo "aws_account_id: ${{ inputs.aws_account_id }}"
         echo "ref: ${{ inputs.ref }}"
         echo "hash: ${{ inputs.hash }}"
-        # if [ "${{ inputs.environment }}" = "stg" ]; then
-        #   echo "result=fail" >> $GITHUB_OUTPUT
-        #   exit 1
-        # fi
+        if ${{ inputs.fail }}; then
+          exit 1
+        fi

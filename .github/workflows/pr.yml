@@ -68,7 +68,7 @@ jobs:
         allowed-skips: deploy
 
   rollback:
-    needs: [changes, required-check]
+    needs: [ changes, required-check ]
     if: always() && needs.required-check.result == 'failure'
     uses: ./.github/workflows/deploy.yml
     strategy:
