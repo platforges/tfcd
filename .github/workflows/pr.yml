@@ -35,9 +35,9 @@ jobs:
     uses: ./.github/workflows/build.yml
 
   deploy:
-    uses: ./.github/workflows/deploy.yml
     needs: [ changes, build ]
     if: github.event_name == 'merge_group' && needs.build.result == 'success'
+    uses: ./.github/workflows/deploy.yml
     strategy:
       matrix:
         env:
@@ -66,3 +66,25 @@ jobs:
       with:
         jobs: ${{ toJSON(needs) }}
         allowed-skips: deploy
+
+  rollback:
+    needs: [changes, required-check]
+    if: always() && needs.required-check.result == 'failure'
+    uses: ./.github/workflows/rollback.yml
+    strategy:
+      matrix:
+        env:
+        - name: dev
+          aws_account_id: '111111111111'
+          if: ${{ needs.changes.outputs.dev == 'true' }}
+        - name: stg
+          aws_account_id: '222222222222'
+          if: ${{ needs.changes.outputs.stg == 'true' }}
+        - name: prd
+          aws_account_id: '333333333333'
+          if: ${{ needs.changes.outputs.prd == 'true' }}
+    with:
+      environment: ${{ matrix.env.name }}
+      aws_account_id: ${{ matrix.env.aws_account_id }}
+      hash: main
+      skip: ${{ !matrix.env.if }}
