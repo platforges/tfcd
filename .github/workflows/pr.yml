@@ -35,6 +35,9 @@ jobs:
     uses: ./.github/workflows/build.yml
 
   deploy:
+    uses: ./.github/workflows/deploy.yml
+    needs: [ changes, build ]
+    if: github.event_name == 'merge_group' && needs.build.result == 'success'
     strategy:
       matrix:
         env:
@@ -47,9 +50,6 @@ jobs:
         - name: prd
           aws_account_id: '333333333333'
           if: needs.changes.outputs.prd == 'true'
-    uses: ./.github/workflows/deploy.yml
-    needs: [ changes, build ]
-    if: github.event_name == 'merge_group' && needs.build.result == 'success'
     with:
       environment: ${{ matrix.env.name }}
       aws_account_id: ${{ matrix.env.aws_account_id }}
@@ -62,7 +62,7 @@ jobs:
     if: always()
     steps:
     - name: Check whether all deploy jobs succeeded
-      uses: re-actors/alls-green@release/v1
+      uses: re-actors/alls-green@v1.2.2
       with:
         jobs: ${{ toJSON(needs) }}
         allowed-skips: deploy

@@ -42,4 +42,9 @@ jobs:
         echo "aws_account_id: ${{ inputs.aws_account_id }}"
         echo "ref: ${{ inputs.ref }}"
         echo "hash: ${{ inputs.hash }}"
-        echo "result=success" >> $GITHUB_OUTPUT
+        if [ "${{ inputs.environment }}" = "stg" ]; then
+          echo "result=fail" >> $GITHUB_OUTPUT
+          exit 1
+        else
+          echo "result=success" >> $GITHUB_OUTPUT
+        fi
