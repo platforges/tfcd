@@ -46,9 +46,9 @@ jobs:
         aws-region: us-east-1
     - name: Terraform validations and plan
       run: |
+        terraform fmt -check
         terraform init -input=false
         terraform validate
-        terraform fmt -check
         terraform plan -input=false -out=tfplan -var 'hash=${{ needs.build.outputs.hash }}'
     - name: Post terraform plan to PR
       uses: borchero/terraform-plan-comment@v2
@@ -56,7 +56,7 @@ jobs:
         token: ${{ github.token }}
         planfile: tfplan
 
-  deploy-terraform:
+  terraform-dev:
     uses: ./.github/workflows/deploy.yml
     needs: build
     if: github.event_name == 'merge_group' && needs.build.result == 'success'
@@ -67,7 +67,7 @@ jobs:
   sanity-test:
     name: Deployed sanity test
     runs-on: ubuntu-latest
-    needs: deploy-terraform
+    needs: terraform-dev
     continue-on-error: true
     outputs:
       result: ${{ steps.sanity.outputs.result }}
@@ -75,7 +75,7 @@ jobs:
     - name: Simulate sanity check
       id: sanity
       run: |
-        if [ "${{ needs.deploy-terraform.outputs.result }}" == "failure" ]; then
+        if [ "${{ needs.terraform-dev.outputs.result }}" == "failure" ]; then
           echo "Deploy failed, skipping sanity test and blocking merge 🔴"
           echo "result=failure" >> $GITHUB_OUTPUT
           exit 1
@@ -85,8 +85,8 @@ jobs:
 
   rollback-if-failed:
     name: Rollback & re-apply main
-    needs: [ deploy-terraform, sanity-test ]
-    if:  needs.deploy-terraform.outputs.result == 'failure' || needs.sanity-test.outputs.result == 'failure'
+    needs: [ terraform-dev, sanity-test ]
+    if:  needs.terraform-dev.outputs.result == 'failure' || needs.sanity-test.outputs.result == 'failure'
     concurrency: deploy-main
     uses: ./.github/workflows/deploy.yml
     with:
