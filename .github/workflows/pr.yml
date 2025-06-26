@@ -43,13 +43,13 @@ jobs:
         env:
         - name: dev
           aws_account_id: '111111111111'
-          if: needs.changes.outputs.dev == 'true'
+          if: ${{ needs.changes.outputs.dev == 'true' }}
         - name: stg
           aws_account_id: '222222222222'
-          if: needs.changes.outputs.stg == 'true'
+          if: ${{ needs.changes.outputs.stg == 'true' }}
         - name: prd
           aws_account_id: '333333333333'
-          if: needs.changes.outputs.prd == 'true'
+          if: ${{ needs.changes.outputs.prd == 'true' }}
     with:
       environment: ${{ matrix.env.name }}
       aws_account_id: ${{ matrix.env.aws_account_id }}

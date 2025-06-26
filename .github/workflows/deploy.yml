@@ -29,9 +29,9 @@ permissions:
 jobs:
   deploy:
     runs-on: ${{ inputs.runs-on }}
-    continue-on-error: true
     concurrency: deploy-${{ inputs.environment }}
     environment: ${{ inputs.environment }}
+    if: ${{ !inputs.skip }}
     outputs:
       result: ${{ steps.apply.outputs.result }}
     steps:
