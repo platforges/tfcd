@@ -1,0 +1,53 @@
+name: Deploy Terraform
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: The git ref to checkout
+        type: string
+        default: ''
+      environment:
+        required: true
+        type: string
+      hash:
+        required: true
+        type: string
+      runs-on:
+        type: string
+        default: ubuntu-latest
+    outputs:
+      result:
+        description: Whether terraform apply step was successfull or not
+        value: ${{ jobs.deploy.outputs.result }}
+permissions:
+  id-token: write # configure-aws-credentials
+jobs:
+  deploy:
+    runs-on: ${{ inputs.runs-on }}
+    continue-on-error: true
+    concurrency: deploy-${{ inputs.environment }}
+    environment: ${{ inputs.environment }}
+    outputs:
+      result: ${{ steps.apply.outputs.result }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.10.2
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::097614841487:role/GithubActionsRole
+        aws-region: us-east-1
+    - name: Terraform apply
+      id: apply
+      run: |
+        terraform init -input=false
+        terraform apply -auto-approve -input=false -var 'hash=${{ inputs.hash }}'
+        if [ $? -ne 0 ]; then
+          echo "Terraform apply failed. 🔴"
+          echo "result=failure" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+        echo "result=success" >> $GITHUB_OUTPUT
