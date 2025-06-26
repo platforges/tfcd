@@ -20,10 +20,6 @@ on:
       skip:
         type: boolean
         default: false
-    outputs:
-      result:
-        description: Whether terraform apply step was successfull or not
-        value: ${{ jobs.deploy.outputs.result }}
 permissions:
   id-token: write # configure-aws-credentials
 jobs:
@@ -32,8 +28,6 @@ jobs:
     concurrency: deploy-${{ inputs.environment }}
     environment: ${{ inputs.environment }}
     if: ${{ !inputs.skip }}
-    outputs:
-      result: ${{ steps.apply.outputs.result }}
     steps:
     - id: apply
       run: |
@@ -42,9 +36,7 @@ jobs:
         echo "aws_account_id: ${{ inputs.aws_account_id }}"
         echo "ref: ${{ inputs.ref }}"
         echo "hash: ${{ inputs.hash }}"
-        if [ "${{ inputs.environment }}" = "stg" ]; then
-          echo "result=fail" >> $GITHUB_OUTPUT
-          exit 1
-        else
-          echo "result=success" >> $GITHUB_OUTPUT
-        fi
+        # if [ "${{ inputs.environment }}" = "stg" ]; then
+        #   echo "result=fail" >> $GITHUB_OUTPUT
+        #   exit 1
+        # fi
