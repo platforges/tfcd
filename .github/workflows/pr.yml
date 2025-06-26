@@ -47,10 +47,14 @@ jobs:
         - name: stg
           aws_account_id: '222222222222'
           if: ${{ needs.changes.outputs.stg == 'true' }}
-          fail: true
         - name: prd
           aws_account_id: '333333333333'
           if: ${{ needs.changes.outputs.prd == 'true' }}
+        include:
+        - name: stg
+          aws_account_id: '222222222222'
+          if: true
+          fail: true
     with:
       environment: ${{ matrix.env.name }}
       aws_account_id: ${{ matrix.env.aws_account_id }}
