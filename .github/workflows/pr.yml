@@ -16,3 +16,5 @@ jobs:
       with:
         webhookUrl: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
         jobStatus: ${{ job.status }}
+        title: An example message for a job run
+        subtitle: ${{ github.event_name }} event by ${{ github.actor }}
