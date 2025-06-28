@@ -11,11 +11,6 @@ permissions:
 jobs:
   chat:
     runs-on: ubuntu-latest
+    environment: ''
     steps:
-    - uses: SimonScholz/google-chat-action@v1.1.0
-      with:
-        webhookUrl: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
-        # jobStatus: ${{ job.status }}
-        title: An example message for a job run
-        subtitle: ${{ github.event_name }} event by ${{ github.actor }}
-        createDefaultSection: false
+    - run: echo "Testing empty environment"
