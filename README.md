@@ -11,5 +11,4 @@ aws s3 cp s3://tfcd-app/version -
 aws s3api get-object-tagging --bucket tfcd-app --key version
 ```
 ### Required status checks
-- pr-checks / pass
-- Deployed sanity test
+- "required-check" -> Taper check that ensures every requirement job ("needs") succeeded or got skiped
