@@ -25,7 +25,9 @@ on:
 jobs:
   deploy:
     runs-on: ${{ inputs.runs-on }}
-    concurrency: deploy-${{ inputs.environment }}
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
     # environment: ${{ inputs.environment }}
     if: ${{ !inputs.skip }}
     steps:
