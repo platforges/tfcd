@@ -18,6 +18,15 @@ jobs:
       with:
         filters: |
           tf:  [ '*.(tf|tfvars)', '.terraform.locl.hcl', version ]
+    - name: Wait for deployment slot
+      if: github.event_name == 'merge_group'
+      uses: softprops/turnstyle@v2
+      with:
+        poll-interval-seconds: 10
+        same-branch-only: false
+        abort-after-seconds: 3600
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   pr-checks:
     uses: ./.github/workflows/pass.yml
