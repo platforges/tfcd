@@ -1,6 +1,12 @@
 name: PR
 on:
   workflow_dispatch:
+    inputs:
+      update_buildcache:
+        description: 'Whether to update docker build cache layers'
+        required: false
+        type: boolean
+        default: false
   pull_request:
     types: [ opened, synchronize, reopened ]
   merge_group:
@@ -12,6 +18,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     steps:
+    - run: echo "update_buildcache is ${{ github.event.inputs.update_buildcache }}"
     - uses: actions/checkout@v4
     - uses: dorny/paths-filter@v3
       id: filter
