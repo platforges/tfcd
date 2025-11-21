@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       update_buildcache:
-        description: 'Whether to update docker build cache layers'
+        description: 'Update docker "buildcache" layers tag'
         required: false
         type: boolean
         default: false
