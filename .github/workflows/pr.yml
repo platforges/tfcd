@@ -1,5 +1,12 @@
 name: PR
 on:
+  workflow_call:
+    inputs:
+      update_buildcache:
+        description: 'Update docker "buildcache" layers tag'
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       update_buildcache:
@@ -18,7 +25,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     steps:
-    - run: echo "update_buildcache is ${{ github.event.inputs.update_buildcache }}"
+    - run: echo "update_buildcache is ${{ inputs.update_buildcache && '-PdockerCacheTo=buildcache' || 'SKIP' }}"
     - uses: actions/checkout@v4
     - uses: dorny/paths-filter@v3
       id: filter
