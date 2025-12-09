@@ -25,11 +25,11 @@ jobs:
 
   deploy:
     needs: [ build ]
-    if: needs.build.result == 'success' && (github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch')
+    if: github.event_name == 'merge_group' && needs.build.result == 'success'
     uses: ./.github/workflows/deploy.yml
     with:
       environment: test
-      sleep: ${{ inputs.duration || 10}}
+      sleep: 10
     secrets: inherit
 
   required-check:
