@@ -20,18 +20,38 @@ on:
       sleep:
         type: number
         default: 0
-# permissions:
-#   id-token: write # configure-aws-credentials
 jobs:
+  queue:
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 60
+    steps:
+    - name: Wait for staging deployment slot
+      uses: softprops/turnstyle@v3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        poll-interval-seconds: 30
+        same-branch-only: false
+        abort-after-seconds: 3600
   deploy:
+    needs: queue
+    if: ${{ !inputs.skip }}
     runs-on: ${{ inputs.runs-on }}
     concurrency:
       group: deploy-${{ inputs.environment }}
       cancel-in-progress: false
-    # environment: ${{ inputs.environment }}
-    if: ${{ !inputs.skip }}
     steps:
-    - run: |
+    - name: Wait for deployment slot
+      if: github.event_name == 'merge_group'
+      uses: softprops/turnstyle@v3
+      with:
+        poll-interval-seconds: 10
+        same-branch-only: false
+        abort-after-seconds: 3600
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Deploy script
+      run: |
         echo "Running .github/workflows/deploy.yml 🚀"
         echo "environment: ${{ inputs.environment }}"
         if ${{ inputs.fail }}; then

@@ -9,10 +9,16 @@ on:
         description: Type of machine to run the job on
         type: string
         default: ubuntu-latest
+      sleep:
+        type: number
+        default: 0
 jobs:
   pass:
     if: ${{ !inputs.skip }}
     runs-on: ${{ inputs.runs-on }}
     steps:
+    - name: Simulate long running proccess
+      if: ${{ inputs.sleep > 0 }}
+      run: sleep ${{ inputs.sleep }}
     - name: Always succeed 🟢
       run: exit 0

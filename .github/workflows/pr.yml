@@ -1,62 +1,36 @@
 name: PR
 on:
-  workflow_call:
-    inputs:
-      update_buildcache:
-        description: 'Update docker "buildcache" layers tag'
-        required: false
-        type: boolean
-        default: false
-  workflow_dispatch:
-    inputs:
-      update_buildcache:
-        description: 'Update docker "buildcache" layers tag'
-        required: false
-        type: boolean
-        default: false
   pull_request:
     types: [ opened, synchronize, reopened ]
   merge_group:
     types: [ checks_requested ]
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Duration to wait before proceeding with deployment (in seconds)'
+        required: false
+        default: '10'
 permissions:
   id-token: write # configure-aws-credentials
   pull-requests: write # pr comment
 jobs:
-  changes:
-    runs-on: ubuntu-latest
-    steps:
-    - run: echo "update_buildcache is ${{ inputs.update_buildcache && '-PdockerCacheTo=buildcache' || 'SKIP' }}"
-    - uses: actions/checkout@v4
-    - uses: dorny/paths-filter@v3
-      id: filter
-      with:
-        filters: |
-          tf:  [ '*.(tf|tfvars)', '.terraform.locl.hcl', version ]
-    - name: Wait for deployment slot
-      if: github.event_name == 'merge_group'
-      uses: softprops/turnstyle@v3
-      with:
-        poll-interval-seconds: 10
-        same-branch-only: false
-        abort-after-seconds: 3600
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   pr-checks:
     uses: ./.github/workflows/pass.yml
     with:
       skip: ${{ github.event_name != 'pull_request' }}
+      sleep: ${{ inputs.duration || 0 }}
 
   build:
     uses: ./.github/workflows/build.yml
 
   deploy:
-    needs: [ changes, build ]
-    if: github.event_name == 'merge_group' && needs.build.result == 'success'
+    needs: [ build ]
+    if: needs.build.result == 'success' && (github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch')
     uses: ./.github/workflows/deploy.yml
     with:
       environment: test
-      sleep: 50
+      sleep: ${{ inputs.duration || 10}}
+    secrets: inherit
 
   required-check:
     runs-on: ubuntu-latest
