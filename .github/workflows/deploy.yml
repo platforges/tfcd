@@ -33,6 +33,8 @@ jobs:
         poll-interval-seconds: 30
         same-branch-only: false
         abort-after-seconds: 3600
+        job-to-wait-for: 'deploy / deploy'
+        step-to-wait-for: 'Complete job'
   deploy:
     needs: queue
     if: ${{ !inputs.skip }}
@@ -41,15 +43,6 @@ jobs:
       group: deploy-${{ inputs.environment }}
       cancel-in-progress: false
     steps:
-    - name: Wait for deployment slot
-      if: github.event_name == 'merge_group'
-      uses: softprops/turnstyle@v3
-      with:
-        poll-interval-seconds: 10
-        same-branch-only: false
-        abort-after-seconds: 3600
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Deploy script
       run: |
         echo "Running .github/workflows/deploy.yml 🚀"
