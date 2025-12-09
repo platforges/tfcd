@@ -24,7 +24,7 @@ jobs:
   build:
     uses: ./.github/workflows/build.yml
 
-  deploy:
+  custom-deploy:
     needs: [ build ]
     if: github.event_name == 'merge_group' && needs.build.result == 'success'
     uses: ./.github/workflows/deploy.yml
@@ -35,10 +35,10 @@ jobs:
 
   required-check:
     runs-on: ubuntu-latest
-    needs: [pr-checks, deploy]
+    needs: [ pr-checks, custom-deploy ]
     if: always()
     steps:
     - uses: re-actors/alls-green@v1.2.2
       with:
         jobs: ${{ toJSON(needs) }}
-        allowed-skips: pr-checks,deploy
+        allowed-skips: pr-checks,custom-deploy
