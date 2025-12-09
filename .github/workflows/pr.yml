@@ -19,7 +19,7 @@ jobs:
     uses: ./.github/workflows/pass.yml
     with:
       skip: ${{ github.event_name == 'merge_group' }}
-      sleep: ${{ inputs.duration || 0 }}
+      sleep: ${{ inputs.duration && fromJSON(inputs.duration) || 0  }}
 
   build:
     uses: ./.github/workflows/build.yml
