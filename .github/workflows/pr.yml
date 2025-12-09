@@ -8,8 +8,9 @@ on:
     inputs:
       duration:
         description: 'Duration to wait before proceeding with deployment (in seconds)'
+        type: number
         required: false
-        default: '10'
+        default: 0
 permissions:
   id-token: write # configure-aws-credentials
   pull-requests: write # pr comment
