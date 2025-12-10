@@ -33,7 +33,7 @@ jobs:
         poll-interval-seconds: 30
         same-branch-only: false
         abort-after-seconds: 3600
-        job-to-wait-for: custom-deploy
+        job-to-wait-for: deploy
         step-to-wait-for: 'Complete job'
   deploy:
     needs: queue
