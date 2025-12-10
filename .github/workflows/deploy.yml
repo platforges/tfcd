@@ -39,9 +39,7 @@ jobs:
     needs: queue
     if: ${{ !inputs.skip }}
     runs-on: ${{ inputs.runs-on }}
-    concurrency:
-      group: deploy-${{ inputs.environment }}
-      cancel-in-progress: false
+    concurrency: deploy-${{ inputs.environment }}
     steps:
     - name: Deploy script
       run: |

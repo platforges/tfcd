@@ -30,7 +30,7 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       environment: test
-      sleep: 10
+      sleep: 60
     secrets: inherit
 
   required-check:
