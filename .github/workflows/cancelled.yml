@@ -28,10 +28,6 @@ jobs:
         echo "$workflow_runs" | jq --raw-output '.[].databaseId' | \
         while read -r run_id; do
           if [ "$run_id" != "$current_run_id" ]; then
-<<<<<<< HEAD
-=======
-            echo "Cancelling workflow run $run_id"
->>>>>>> 9a59196 (nit: workflow cancelation)
             gh run cancel "$run_id" || echo "WARNING: Could not cancel run $run_id" >&2
           fi
         done
