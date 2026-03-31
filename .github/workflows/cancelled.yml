@@ -15,17 +15,22 @@ jobs:
     steps:
     - name: Cancel stale workflow runs of ${{ github.ref }}
       run: |
-        # Get all workflow runs for the specific SHA
-        workflow_runs=$(curl --header "Authorization: Bearer ${{ github.token }}" --silent \
-          "https://api.github.com/repos/${{ github.repository }}/actions/runs?head_sha=${{ github.sha }}")
+        set -euo pipefail
 
-        # Extract run IDs and cancel them (except current workflow)
+        workflow_runs=$(curl --silent --show-error --fail-with-body --header "Authorization: Bearer ${{ github.token }}" \
+          "https://api.github.com/repos/${{ github.repository }}/actions/runs?head_sha=${{ github.sha }}&per_page=100")
+        run_count=$(echo "$workflow_runs" | jq '[.workflow_runs[] | select(.status != "completed")] | length')
         current_run_id="${{ github.run_id }}"
-        echo "Current Run ID: $current_run_id"
-        echo "$workflow_runs" | jq -r '.workflow_runs[] | select(.status != "completed") | .id' | while read -r run_id; do
+        echo "Found $run_count active run(s) for SHA ${{ github.sha }}. Current Run ID: $current_run_id"
+
+        echo "$workflow_runs" | jq --raw-output '.workflow_runs[] | select(.status != "completed") | .id' \
+        | while read -r run_id; do
           if [ -n "$run_id" ] && [ "$run_id" != "$current_run_id" ]; then
             echo "Cancelling workflow run $run_id"
-            curl --request POST --header "Authorization: Bearer ${{ github.token }}" --silent \
-              "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/cancel"
+            http_code=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" --header "Authorization: Bearer ${{ github.token }}" \
+              --request POST "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/cancel")
+            if [ "$http_code" != "202" ]; then
+              echo "WARNING: Cancel request for run $run_id returned HTTP $http_code" >&2
+            fi
           fi
         done
