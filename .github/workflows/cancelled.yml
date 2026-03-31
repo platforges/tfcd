@@ -5,7 +5,6 @@ on:
 
 permissions:
   actions: write
-  contents: read
 
 jobs:
   cancel-workflows:
@@ -26,10 +25,9 @@ jobs:
         run_count=$(echo "$workflow_runs" | jq 'length')
         echo "Found $run_count active run(s) for commit ${{ github.sha }}. Current Run ID: $current_run_id"
 
-        echo "$workflow_runs" | jq --raw-output '.[].databaseId' \
-        | while read -r run_id; do
-          if [ -n "$run_id" ] && [ "$run_id" != "$current_run_id" ]; then
-            echo "Cancelling workflow run $run_id"
-            gh run cancel "$run_id"
+        echo "$workflow_runs" | jq --raw-output '.[].databaseId' | \
+        while read -r run_id; do
+          if [ "$run_id" != "$current_run_id" ]; then
+            gh run cancel "$run_id" || echo "WARNING: Could not cancel run $run_id" >&2
           fi
         done
