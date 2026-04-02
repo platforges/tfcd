@@ -41,7 +41,8 @@ runs:
         fi
 
         BLOCKING_IDS=$(gh run list --workflow "${WORKFLOW_NAME}" --event merge_group --json databaseId,status --limit 100 \
-          --jq "[.[] | select(.status == \"in_progress\" or .status == \"queued\" or .status == \"waiting\") | select(.databaseId < ${GITHUB_RUN_ID})] | .[].databaseId")
+          | jq -r --argjson cur "${GITHUB_RUN_ID}" \
+          '[.[] | select(.status == "in_progress" or .status == "queued" or .status == "waiting") | select(.databaseId < $cur)] | .[].databaseId')
 
         if [ -z "${BLOCKING_IDS}" ]; then
           echo "No earlier merge_group runs are blocking. Proceeding."
@@ -57,8 +58,11 @@ runs:
 
         STILL_BLOCKING=false
         while read -r RUN_ID; do
-          JOB_STATUS=$(gh run view "${RUN_ID}" --json jobs \
-            --jq "[.jobs[] | select(.name == \"${JOB_TO_WAIT_FOR}\")] | last | .status // \"not_found\"")
+          GH_VIEW_OUT=$(gh run view "${RUN_ID}" --json jobs 2>&1) \
+            || { echo "::error::Failed to fetch job status for run ${RUN_ID}: ${GH_VIEW_OUT}"; exit 1; }
+          JOB_STATUS=$(echo "${GH_VIEW_OUT}" \
+            | jq -r --arg job "${JOB_TO_WAIT_FOR}" \
+            '[.jobs[] | select(.name == $job)] | last | .status // "not_found"')
           echo "  Run ${RUN_ID}: job '${JOB_TO_WAIT_FOR}' status = ${JOB_STATUS}"
           if [ "${JOB_STATUS}" != "completed" ]; then
             STILL_BLOCKING=true
