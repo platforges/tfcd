@@ -25,14 +25,10 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     timeout-minutes: 60
     steps:
+    - uses: actions/checkout@v6
     - name: Wait for staging deployment slot
-      uses: softprops/turnstyle@v3
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: ./.github/actions/queue-merge-group
       with:
-        poll-interval-seconds: 30
-        same-branch-only: false
-        abort-after-seconds: 3600
         job-to-wait-for: 'custom-deploy / deploy'
   deploy:
     needs: queue
