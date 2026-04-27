@@ -1,0 +1,7 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  open-pull-requests-limit: 0 # only security updates - https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configuring-dependabot-security-updates#overriding-the-default-behavior-with-a-configuration-file
+  directory: /src
+  schedule:
+    interval: daily
