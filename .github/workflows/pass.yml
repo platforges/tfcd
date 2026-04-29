@@ -20,5 +20,5 @@ jobs:
     - name: Simulate long running proccess
       if: ${{ inputs.sleep > 0 }}
       run: sleep ${{ inputs.sleep }}
-    - name: Always succeed 🟢
-      run: exit 0
+    - name: Simulate failure 🔴
+      run: exit 1

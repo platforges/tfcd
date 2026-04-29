@@ -1,0 +1,166 @@
+name: Dependabot Claude Fix
+on:
+  workflow_run:
+    workflows: ["PR"]
+    types: [completed]
+concurrency: dependabot-claude-fix-${{ github.event.workflow_run.head_branch }}
+jobs:
+  auto-fix:
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: write
+      id-token: write
+    steps:
+    - name: Fetch PR metadata and apply one-shot label
+      id: pr
+      uses: actions/github-script@v9
+      with:
+        script: |
+          const prNumber = context.payload.workflow_run.pull_requests?.[0]?.number;
+          if (!prNumber) {
+            core.info('No PR associated with this workflow_run; exiting.');
+            core.setOutput('skip', 'true');
+            return;
+          }
+
+          const { data: pr } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: prNumber,
+          });
+
+          const author = pr.user?.login;
+          if (author !== 'dependabot[bot]') {
+            core.info(`PR author is ${author}, not dependabot; exiting.`);
+            core.setOutput('skip', 'true');
+            return;
+          }
+
+          if (pr.labels.some(l => l.name === 'claude-auto-fix-attempted')) {
+            core.info('PR already has claude-auto-fix-attempted label; one-shot guard exiting.');
+            core.setOutput('skip', 'true');
+            return;
+          }
+
+          await github.rest.issues.addLabels({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: prNumber,
+            labels: ['claude-auto-fix-attempted'],
+          });
+
+          core.setOutput('number', String(prNumber));
+          core.setOutput('branch', pr.head.ref);
+          core.setOutput('head_sha', pr.head.sha);
+
+    - name: Checkout PR head
+      if: steps.pr.outputs.skip != 'true'
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ steps.pr.outputs.branch }}
+        fetch-depth: 0
+
+    - name: Gather failing required checks
+      if: steps.pr.outputs.skip != 'true'
+      id: triage
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR_NUMBER: ${{ steps.pr.outputs.number }}
+        HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+      run: |
+        set -euo pipefail
+        mkdir -p build/failures
+
+        gh pr checks "$PR_NUMBER" --json state,link \
+          | jq -r '.[] | select(.state == "FAILURE") | .link | capture("/runs/(?<id>[0-9]+)") | .id' \
+          | sort -u > build/run-ids.txt
+
+        if [ ! -s build/run-ids.txt ]; then
+          echo "skip=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        : > build/failed-workflows.txt
+        while read -r run_id; do
+          wf=$(gh run view "$run_id" --json workflowName -q .workflowName)
+          echo "$wf" >> build/failed-workflows.txt
+          gh run view "$run_id" --log-failed > "build/failures/${wf// /_}.log" 2>&1 || true
+        done < build/run-ids.txt
+        sort -u -o build/failed-workflows.txt build/failed-workflows.txt
+
+        gh pr diff "$PR_NUMBER" > build/pr.diff
+
+        {
+          echo "failed_workflows<<EOF"
+          cat build/failed-workflows.txt
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Configure git for push
+      if: steps.pr.outputs.skip != 'true' && steps.triage.outputs.skip != 'true'
+      run: |
+        git config user.name "claude[bot]"
+        git config user.email "41898282+claude[bot]@users.noreply.github.com"
+
+    - name: Run Claude Code
+      if: steps.pr.outputs.skip != 'true' && steps.triage.outputs.skip != 'true'
+      uses: anthropics/claude-code-action@v1
+      with:
+        claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        allowed_bots: "dependabot"
+        claude_args: |
+          --model claude-opus-4-7
+          --allowedTools "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git *),Bash(./gradlew *),Bash(yarn *),Bash(npm *),Bash(pip *),Bash(terraform *),Bash(gh pr *),Bash(gh workflow run *),Bash(gh run view *),Bash(cat *),Bash(grep *),Bash(find *),Bash(head *),Bash(tail *),Bash(jq *)"
+        additional_permissions: |
+          actions: write
+          contents: write
+          pull-requests: write
+        prompt: |
+          Repository: ${{ github.repository }}
+          PR number: ${{ steps.pr.outputs.number }}
+          PR branch: ${{ steps.pr.outputs.branch }}
+          Head SHA: ${{ steps.pr.outputs.head_sha }}
+
+          You are auto-fixing a Dependabot **security update** PR whose required CI checks failed.
+
+          Dependabot security updates may include **major-version bumps** when that is
+          the minimum patched release. The fix is rarely "pin back to the old version" —
+          it is usually updating calling code, lockfiles, or transitive pins to be
+          compatible with the new version. Do NOT downgrade to the vulnerable version.
+
+          Failing workflows (you must re-trigger each one — see below):
+          ```
+          ${{ steps.triage.outputs.failed_workflows }}
+          ```
+
+          Inputs available on disk in this checkout:
+          - `build/pr.diff` — the Dependabot diff
+          - `build/failures/<workflow>.log` — raw failed-step output for each failing workflow
+          - `build/failed-workflows.txt` — workflow names to re-trigger
+
+          Steps:
+          1. Read `build/pr.diff` and the failure logs in `build/failures/`.
+          2. Reason about the root cause. If it is unsafe to fix automatically (ambiguous
+              breakage, requires product decision, would weaken security), STOP and
+              post a PR comment explaining the diagnosis. Do not push anything.
+          3. Otherwise, make the minimal code/lockfile changes needed to make the
+              failing checks pass. Run the relevant local validation if cheap
+              (e.g. `./gradlew :module:compileJava`, `yarn build`, `yarn test:unit`).
+          4. Commit with message `[claude-auto-fix] <one-line summary>` and push to
+              the PR branch (`${{ steps.pr.outputs.branch }}`).
+          5. **CRITICAL:** After pushing, you MUST run, for each workflow listed
+              above:
+                `gh workflow run "<workflow name>" --ref ${{ steps.pr.outputs.branch }}`
+              GitHub does NOT trigger new workflow runs from commits pushed with
+              `GITHUB_TOKEN`, so without this step CI will not re-run and your fix
+              will not be validated.
+          6. Post a single PR comment summarizing what you changed and why.
+
+          One attempt only. If the fix turns out to be wrong after CI re-runs, a human
+          reviewer will take over — do not retry from a future invocation.
