@@ -9,7 +9,7 @@
     "dev": "ts-node src/index.ts"
   },
   "dependencies": {
-    "protobufjs": "6.11.4"
+    "protobufjs": "7.5.5"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
