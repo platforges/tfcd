@@ -21,20 +21,12 @@ on:
         type: number
         default: 0
 jobs:
-  queue:
-    runs-on: ${{ inputs.runs-on }}
-    timeout-minutes: 60
-    steps:
-    - uses: actions/checkout@v6
-    - name: Wait for staging deployment slot
-      uses: ./.github/actions/queue-merge-group
-      with:
-        job-to-wait-for: 'custom-deploy / deploy'
   deploy:
-    needs: queue
-    if: ${{ !inputs.skip }}
     runs-on: ${{ inputs.runs-on }}
-    concurrency: deploy-${{ inputs.environment }}
+    if: ${{ !inputs.skip }}
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      queue: max # https://github.com/orgs/community/discussions/12835#discussioncomment-16602100
     steps:
     - name: Deploy script
       run: |

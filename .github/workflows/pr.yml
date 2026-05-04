@@ -28,10 +28,10 @@ jobs:
     needs: [ build ]
     if: github.event_name == 'merge_group' && needs.build.result == 'success'
     uses: ./.github/workflows/deploy.yml
+    secrets: inherit
     with:
       environment: test
       sleep: 60
-    secrets: inherit
 
   required-check:
     runs-on: ubuntu-latest
